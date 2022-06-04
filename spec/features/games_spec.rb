@@ -45,10 +45,6 @@ RSpec.feature "Texas Hold'em Games" do
       ])
     end
 
-    When "the blinds are paid" do
-      @game.run_command!(:pay_blinds)
-    end
-
     Then "Mot has paid the small blind" do
       expect(@game.player("mot")).to have_attributes(credits: 990, current_bet: 10)
     end

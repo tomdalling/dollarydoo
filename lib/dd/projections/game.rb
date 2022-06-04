@@ -9,9 +9,6 @@ class DD::Projections::Game
     pooled_pot DD::Types::Credits, default: 0
     community_cards ArrayOf(DD::Card), default: []
     deck ArrayOf(DD::Card), default: []
-
-    small_blind DD::Types::Credits, default: 0
-    big_blind DD::Types::Credits, default: 0
   end
 
   def dealer = player_at_position(0)
@@ -43,7 +40,6 @@ class DD::Projections::Game
   def apply(event)
     case event
     when DD::Events::GameStarted then apply_game_started(event)
-    when DD::Events::BlindsPaid then apply_blinds_paid
     when DD::Events::BetPlaced then after_bet(event.credits, acted: true)
     else fail "unhandled event type #{event.class}"
     end
@@ -85,21 +81,16 @@ class DD::Projections::Game
         p.with(hole_cards: remaining_deck.shift(HOLE_CARDS))
       end
 
-      with(
-        players: dealt_players,
-        small_blind: event.small_blind,
-        big_blind: event.big_blind,
-        deck: remaining_deck,
-      )
-    end
-
-    def apply_blinds_paid
-      fail if current_player != dealer
-
-      # TODO: This is not correct when players.size == 2. Need to implement
-      # "heads up" rule.
-      after_bet(0, acted: false)
-        .after_bet(small_blind, acted: false)
-        .after_bet(big_blind, acted: false)
+      self
+        .with(
+          current_player_idx: 0,
+          players: dealt_players,
+          deck: remaining_deck,
+        )
+        # TODO: This is not correct when players.size == 2. Need to implement
+        # "heads up" rule for blinds.
+        .after_bet(0, acted: false)
+        .after_bet(event.small_blind, acted: false)
+        .after_bet(event.big_blind, acted: false)
     end
 end
