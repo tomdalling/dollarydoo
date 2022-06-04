@@ -1,7 +1,7 @@
 # Mutable wrapper for an immutable projection
 class DD::Entity < SimpleDelegator
   def initialize(projection_class)
-    super(projection_class.new)
+    super(projection_class)
   end
 
   def run_command!(command_name, **command_params)

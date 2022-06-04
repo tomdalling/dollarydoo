@@ -4,11 +4,11 @@ class DD::Projections::Game
   HOLE_CARDS = 2
 
   value_semantics do
-    players ArrayOf(DD::Player), default: []
-    current_player_idx DD::Types::Index, default: 0
-    pooled_pot DD::Types::Credits, default: 0
-    community_cards ArrayOf(DD::Card), default: []
-    deck ArrayOf(DD::Card), default: []
+    players ArrayOf(DD::Player)
+    current_player_idx DD::Types::Index
+    pooled_pot DD::Types::Credits
+    community_cards ArrayOf(DD::Card)
+    deck ArrayOf(DD::Card)
   end
 
   def dealer = player_at_position(0)
@@ -20,32 +20,56 @@ class DD::Projections::Game
       fail "player not found: #{username.inspect}"
   end
 
-  def after_bet(credits, acted:)
-    with(
-      current_player_idx: (current_player_idx + 1) % players.size,
-      players: players_updating(current_player_idx) do
-        _1.after_betting(credits, acted: acted)
-      end
-    ).ending_stage_if_necessary
-  end
+  def self.apply(event)
+    raise ArgumentError unless event.is_a?(DD::Events::GameStarted)
 
-  def ending_stage_if_necessary
-    if stage_finished?
-      after_ending_stage
-    else
-      self
+    remaining_deck = event.deck.dup
+    dealt_players = event.players.map do |p|
+      p.with(hole_cards: remaining_deck.shift(HOLE_CARDS))
     end
+
+    self
+      .new(
+        current_player_idx: 0,
+        players: dealt_players,
+        deck: remaining_deck,
+        pooled_pot: 0,
+        community_cards: [],
+      )
+      # TODO: This is not correct when players.size == 2. Need to implement
+      # "heads up" rule for blinds.
+      .send(:after_bet, 0, acted: false)
+      .send(:after_bet, event.small_blind, acted: false)
+      .send(:after_bet, event.big_blind, acted: false)
   end
 
   def apply(event)
     case event
-    when DD::Events::GameStarted then apply_game_started(event)
     when DD::Events::BetPlaced then after_bet(event.credits, acted: true)
     else fail "unhandled event type #{event.class}"
     end
   end
 
   private
+
+    def after_bet(credits, acted:)
+      self
+        .with(
+          current_player_idx: (current_player_idx + 1) % players.size,
+          players: players_updating(current_player_idx) do
+            _1.after_betting(credits, acted: acted)
+          end
+        )
+        .send(:ending_stage_if_necessary)
+    end
+
+    def ending_stage_if_necessary
+      if stage_finished?
+        after_ending_stage
+      else
+        self
+      end
+    end
 
     def player_at_position(idx)
       players.fetch(idx % players.size)
@@ -75,22 +99,4 @@ class DD::Projections::Game
       community_cards.empty?
     end
 
-    def apply_game_started(event)
-      remaining_deck = event.deck.dup
-      dealt_players = event.players.map do |p|
-        p.with(hole_cards: remaining_deck.shift(HOLE_CARDS))
-      end
-
-      self
-        .with(
-          current_player_idx: 0,
-          players: dealt_players,
-          deck: remaining_deck,
-        )
-        # TODO: This is not correct when players.size == 2. Need to implement
-        # "heads up" rule for blinds.
-        .after_bet(0, acted: false)
-        .after_bet(event.small_blind, acted: false)
-        .after_bet(event.big_blind, acted: false)
-    end
 end
