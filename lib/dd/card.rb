@@ -32,4 +32,25 @@ class DD::Card
       @cache[attrs] = super.freeze
     end
   end
+
+  def inspect
+    short_suit = suit.to_s[0].upcase
+    short_rank = {
+      two: "2",
+      three: "3",
+      four: "4",
+      five: "5",
+      six: "6",
+      seven: "7",
+      eight: "8",
+      nine: "9",
+      ten: "10",
+      jack: "J",
+      queen: "Q",
+      king: "K",
+      ace: "A",
+    }.fetch(rank)
+
+    "#<Card #{short_rank}#{short_suit}>"
+  end
 end
