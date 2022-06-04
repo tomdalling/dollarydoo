@@ -175,5 +175,17 @@ RSpec.feature "Texas Hold'em Games" do
     Then "the game is over" do
       expect(@game).to be_finished
     end
+
+    And "the winner is Mot with a flush" do
+      expect(@game.wins.size).to eq(1)
+      expect(@game.wins.first.player.username).to eq("mot")
+      expect(@game.wins.first.hand.cards).to contain_exactly(
+        DD::Card.six_of_diamonds,
+        DD::Card.seven_of_diamonds,
+        DD::Card.ace_of_diamonds,
+        DD::Card.three_of_diamonds,
+        DD::Card.jack_of_diamonds,
+      )
+    end
   end
 end

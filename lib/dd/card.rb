@@ -1,6 +1,28 @@
 class DD::Card
-  RANKS = %i[two three four five six seven eight nine ten jack queen king ace].freeze
-  SUITS = %i[diamonds clubs hearts spades].freeze
+  RANK_PREFIXES = {
+    two: "2",
+    three: "3",
+    four: "4",
+    five: "5",
+    six: "6",
+    seven: "7",
+    eight: "8",
+    nine: "9",
+    ten: "10",
+    jack: "J",
+    queen: "Q",
+    king: "K",
+    ace: "A",
+  }.freeze
+  RANKS = RANK_PREFIXES.keys.freeze
+
+  SUIT_SUFFIXES = {
+    diamonds: "D",
+    clubs: "C",
+    hearts: "H",
+    spades: "S",
+  }.freeze
+  SUITS = SUIT_SUFFIXES.keys.freeze
 
   value_semantics do
     rank Either(*RANKS)
@@ -25,6 +47,17 @@ class DD::Card
       end.freeze
   end
 
+  def self.parse(serialized)
+    attrs = {
+      rank: RANK_PREFIXES.key(serialized[0..-2]),
+      suit: SUIT_SUFFIXES.key(serialized[-1]),
+    }
+
+    raise "wtf? #{serialized.inspect}" if attrs.values.any?(&:nil?)
+
+    new(**attrs)
+  end
+
   def self.new(**attrs)
     # there are only a finite set of values, so might as well deduplicate them
     @cache ||= {}
@@ -33,24 +66,11 @@ class DD::Card
     end
   end
 
-  def inspect
-    short_suit = suit.to_s[0].upcase
-    short_rank = {
-      two: "2",
-      three: "3",
-      four: "4",
-      five: "5",
-      six: "6",
-      seven: "7",
-      eight: "8",
-      nine: "9",
-      ten: "10",
-      jack: "J",
-      queen: "Q",
-      king: "K",
-      ace: "A",
-    }.fetch(rank)
+  def rank_value
+    RANKS.index(rank) || fail
+  end
 
-    "#<Card #{short_rank}#{short_suit}>"
+  def inspect
+    "#<Card #{RANK_PREFIXES.fetch(rank)}#{SUIT_SUFFIXES.fetch(suit)}>"
   end
 end

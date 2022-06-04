@@ -33,6 +33,17 @@ class DD::Projections::Game
     end
   end
 
+  def wins
+    ordered_potentials =
+      players
+        .map { potential_win_for(_1) }
+        .sort_by(&:hand)
+        .reverse # best hands first
+
+    # can be multiple winners with equal hands
+    ordered_potentials.take_while { _1.hand >= ordered_potentials.first.hand }
+  end
+
   def self.apply(event)
     raise ArgumentError unless event.is_a?(DD::Events::GameStarted)
 
@@ -105,6 +116,13 @@ class DD::Projections::Game
         players: players.map(&:apply_reset_for_next_stage),
         community_cards: community_cards + deck.first(deal_count),
         deck: deck.drop(deal_count),
+      )
+    end
+
+    def potential_win_for(player)
+      DD::Win.new(
+        player: player,
+        hand: DD::Hand.best_from(player.hole_cards + community_cards),
       )
     end
 end
