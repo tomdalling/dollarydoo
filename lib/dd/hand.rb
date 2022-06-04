@@ -30,15 +30,15 @@ class DD::Hand
   end
 
   def type
-    if straight? && flush?
+    if sequential_ranks? && same_suit?
       :straight_flush
     elsif quadruplet?
       :four_of_a_kind
     elsif triplet? && pairs.count == 1
       :full_house
-    elsif flush?
+    elsif same_suit?
       :flush
-    elsif straight?
+    elsif sequential_ranks?
       :straight
     elsif triplet?
       :three_of_a_kind
@@ -52,6 +52,12 @@ class DD::Hand
     end
   end
 
+  TYPES.each do |type|
+    class_eval <<~RUBY
+      def #{type}? = type == :#{type}  # def same_suit? = type == :flush
+    RUBY
+  end
+
   def <=>(other)
     if type == other.type
       ordered_kicker_values <=> other.send(:ordered_kicker_values)
@@ -62,7 +68,7 @@ class DD::Hand
 
   private
 
-    def straight?
+    def sequential_ranks?
       ordered_values = cards.map(&:rank_value).sort
 
       ordered_values[0..-2].zip(ordered_values[1..-1]).all? do |(this_rank, next_rank)|
@@ -84,7 +90,7 @@ class DD::Hand
         .map { _1.first.rank_value }
     end
 
-    def flush? = cards.map(&:suit).uniq.size == 1
+    def same_suit? = cards.map(&:suit).uniq.size == 1
     def pairs = rank_groups.select { _1.size == 2 }
     def triplet? = rank_groups.any? { _1.size == 3 }
     def quadruplet? = rank_groups.any? { _1.size == 4 }

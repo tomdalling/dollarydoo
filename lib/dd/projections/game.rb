@@ -19,7 +19,10 @@ class DD::Projections::Game
   def showdown? = river? && stage_finished?
   def current_player = player_at_position(current_player_idx)
   def remaining_players = players.select(&:active?)
+  def dealer = players.last
   def largest_current_bet = players.map(&:current_bet).max
+  def total_pot = pooled_pot + players.sum(&:current_bet)
+  def winners = wins.map(&:player)
   def player(username)
     players.find { _1.username == username } or
       fail "player not found: #{username.inspect}"
@@ -36,8 +39,16 @@ class DD::Projections::Game
   end
 
   def wins
+    return [] unless finished?
+
     if remaining_players.count == 1
-      [DD::Win.new(player: remaining_players.first, hand: nil)]
+      [
+        DD::Win.new(
+          player: remaining_players.first,
+          hand: nil,
+          share_of_pot: total_pot,
+        )
+      ]
     else
       showdown_wins
     end
@@ -61,7 +72,6 @@ class DD::Projections::Game
       )
       # TODO: This is not correct when players.size == 2. Need to implement
       # "heads up" rule for blinds.
-      .send(:apply_bet, 0, acted: false)
       .send(:apply_bet, event.small_blind, acted: false)
       .send(:apply_bet, event.big_blind, acted: false)
   end
@@ -106,8 +116,8 @@ class DD::Projections::Game
     end
 
     def stage_finished?
-      players.all?(&:acted_this_stage?) &&
-        players.map(&:current_bet).uniq.size == 1 # all the same bet
+      remaining_players.all?(&:acted_this_stage?) &&
+        remaining_players.map(&:current_bet).uniq.size == 1 # all the same bet
     end
 
     def player_at_position(idx)
@@ -121,7 +131,7 @@ class DD::Projections::Game
     def apply_start_of_next_stage
       deal_count = pre_flop? ? FLOP_CARDS : TURN_AND_RIVER_CARDS
       with(
-        current_player_idx: 1, # player after dealer
+        current_player_idx: players.index(remaining_players.first),
         pooled_pot: pooled_pot + players.sum(&:current_bet),
         players: players.map(&:apply_reset_for_next_stage),
         community_cards: community_cards + deck.first(deal_count),
@@ -137,12 +147,15 @@ class DD::Projections::Game
           .reverse # best hands first
 
       # can be multiple winners with equal hands
-      ordered_potentials.take_while { _1.hand >= ordered_potentials.first.hand }
+      ordered_potentials
+        .take_while { _1.hand >= ordered_potentials.first.hand }
+        .then { distribute_pot_over(_1) }
     end
 
     def potential_win_for(player)
       DD::Win.new(
         player: player,
+        share_of_pot: 0,
         hand:
           if showdown?
             DD::Hand.best_from(player.hole_cards + community_cards)
@@ -150,5 +163,16 @@ class DD::Projections::Game
             nil
           end
       )
+    end
+
+    def distribute_pot_over(wins)
+      division = total_pot / wins.count
+      remainder = total_pot % division
+      ordered_wins = wins.sort_by { players.index(_1.player) }
+
+      ordered_wins.each_with_index.map do |w, idx|
+        extra = idx < remainder ? 1 : 0
+        w.with(share_of_pot: division + extra)
+      end
     end
 end

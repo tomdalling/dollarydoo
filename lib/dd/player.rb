@@ -23,7 +23,6 @@ class DD::Player
     with(
       current_bet: 0,
       acted_this_stage?: false,
-      state: :active,
     )
   end
 
