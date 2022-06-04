@@ -1,13 +1,12 @@
 module DD::Commands::StartGame
   extend self
 
-  def call
+  def call(players:, small_blind:, big_blind:)
     DD::CommandResult.success([
       DD::Events::GameStarted.new(
-        players: [
-          DD::Player.new(username: "tom"),
-          DD::Player.new(username: "mot"),
-        ]
+        small_blind: small_blind,
+        big_blind: big_blind,
+        players: players,
       )
     ])
   end

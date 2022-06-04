@@ -3,6 +3,9 @@ require "rubygems"
 require "bundler"
 Bundler.require
 
+# stdlib
+require "delegate"
+
 # zeitwerk
 require_relative "dd"
 require_relative "dd/inflector"

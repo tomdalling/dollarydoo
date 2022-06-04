@@ -1,9 +1,7 @@
 # Mutable wrapper for an immutable projection
-class DD::Entity
-  attr_reader :projection
-
+class DD::Entity < SimpleDelegator
   def initialize(projection_class)
-    @projection = projection_class.new
+    super(projection_class.new)
   end
 
   def run_command!(command_name, **command_params)
@@ -15,7 +13,7 @@ class DD::Entity
     end
 
     result.events.each do |event|
-      @projection = @projection.apply(event)
+      __setobj__(__getobj__.apply(event))
     end
 
     nil
