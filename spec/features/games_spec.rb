@@ -12,12 +12,12 @@ RSpec.feature "Texas Hold'em Games" do
         ],
         deck: [
           # deal to p1 (AQ off suit)
-          # DD::Card.ace_of_spades,
-          # DD::Card.queen_of_hearts,
+          DD::Card.ace_of_spades,
+          DD::Card.queen_of_hearts,
 
           # deal to p2 (suited connectors)
-          # DD::Card.six_of_diamonds,
-          # DD::Card.seven_of_diamonds,
+          DD::Card.six_of_diamonds,
+          DD::Card.seven_of_diamonds,
 
           # flop (rainbow, pair of aces for p1, straight draw for p2)
           DD::Card.ace_of_diamonds,
@@ -33,8 +33,16 @@ RSpec.feature "Texas Hold'em Games" do
       )
     end
 
-    Then "it has players" do
-      expect(@game.players.size).to eq(2)
+    Then "hole cards are dealt to players" do
+      expect(@game.player("tom").hole_cards).to eq([
+        DD::Card.ace_of_spades,
+        DD::Card.queen_of_hearts,
+      ])
+
+      expect(@game.player("mot").hole_cards).to eq([
+        DD::Card.six_of_diamonds,
+        DD::Card.seven_of_diamonds,
+      ])
     end
 
     When "the blinds are paid" do

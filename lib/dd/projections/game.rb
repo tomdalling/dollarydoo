@@ -1,6 +1,7 @@
 class DD::Projections::Game
   FLOP_CARDS = 3
   TURN_AND_RIVER_CARDS = 1
+  HOLE_CARDS = 2
 
   value_semantics do
     players ArrayOf(DD::Player), default: []
@@ -79,11 +80,16 @@ class DD::Projections::Game
     end
 
     def apply_game_started(event)
+      remaining_deck = event.deck.dup
+      dealt_players = event.players.map do |p|
+        p.with(hole_cards: remaining_deck.shift(HOLE_CARDS))
+      end
+
       with(
-        players: event.players,
+        players: dealt_players,
         small_blind: event.small_blind,
         big_blind: event.big_blind,
-        deck: event.deck,
+        deck: remaining_deck,
       )
     end
 

@@ -4,6 +4,7 @@ class DD::Player
     credits DD::Types::Credits
     current_bet DD::Types::Credits, default: 0
     acted_this_stage? Bool(), default: false
+    hole_cards ArrayOf(DD::Card), default: []
   end
 
   def after_betting(bet, acted:)
