@@ -28,6 +28,7 @@ class DD::Projections::Game
     case event
     when DD::Events::GameStarted then apply_game_started(event)
     when DD::Events::BlindsPaid then apply_blinds_paid
+    when DD::Events::BetPlaced then after_bet(event.credits)
     else fail "unhandled event type #{event.class}"
     end
   end

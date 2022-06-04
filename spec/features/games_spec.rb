@@ -32,5 +32,20 @@ RSpec.feature "Games" do
     Then "Mot is the current player" do
       expect(@game.current_player.username).to eq("mot")
     end
+
+    When "Mot calls" do
+      @game.run_command!(:bet, credits: 10)
+    end
+
+    Then "Mot has paid up to the big blind" do
+      expect(@game.player("mot")).to have_attributes(
+        current_bet: 20,
+        credits: 980,
+      )
+    end
+
+    Then "Tom is the current player" do
+      expect(@game.current_player.username).to eq("tom")
+    end
   end
 end
