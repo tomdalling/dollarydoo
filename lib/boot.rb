@@ -1,3 +1,16 @@
-$LOAD_PATH.unshift(__dir__) unless $LOAD_PATH.include?(__dir__)
+# bundler
+require "rubygems"
+require "bundler"
+Bundler.require
 
-require "dd"
+# zeitwerk
+require_relative "dd"
+require_relative "dd/inflector"
+Zeitwerk::Loader.new.tap do |loader|
+  loader.push_dir(__dir__)
+  loader.inflector = DD::Inflector
+  loader.setup
+end
+
+# other global config
+ValueSemantics.monkey_patch!
