@@ -7,7 +7,7 @@ class DD::Player
     hole_cards ArrayOf(DD::Card), default: []
   end
 
-  def after_betting(bet, acted:)
+  def apply_bet(bet, acted:)
     with(
       current_bet: current_bet + bet,
       credits: credits - bet,
@@ -15,7 +15,7 @@ class DD::Player
     )
   end
 
-  def reset_for_next_stage
+  def apply_reset_for_next_stage
     with(
       current_bet: 0,
       acted_this_stage?: false,
