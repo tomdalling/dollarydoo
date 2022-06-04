@@ -5,7 +5,11 @@ class DD::Player
     current_bet DD::Types::Credits, default: 0
     acted_this_stage? Bool(), default: false
     hole_cards ArrayOf(DD::Card), default: []
+    state Either(:active, :folded), default: :active
   end
+
+  def active? = state == :active
+  def folded? = state == :folded
 
   def apply_bet(bet, acted:)
     with(
@@ -19,6 +23,11 @@ class DD::Player
     with(
       current_bet: 0,
       acted_this_stage?: false,
+      state: :active,
     )
+  end
+
+  def apply_fold
+    with(state: :folded)
   end
 end

@@ -15,8 +15,10 @@ class DD::Projections::Game
   def flop? = stage == :flop
   def turn? = stage == :turn
   def river? = stage == :river
-  def finished? = river? && stage_finished?
+  def finished? = showdown? || remaining_players.count == 1
+  def showdown? = river? && stage_finished?
   def current_player = player_at_position(current_player_idx)
+  def remaining_players = players.select(&:active?)
   def largest_current_bet = players.map(&:current_bet).max
   def player(username)
     players.find { _1.username == username } or
@@ -34,14 +36,11 @@ class DD::Projections::Game
   end
 
   def wins
-    ordered_potentials =
-      players
-        .map { potential_win_for(_1) }
-        .sort_by(&:hand)
-        .reverse # best hands first
-
-    # can be multiple winners with equal hands
-    ordered_potentials.take_while { _1.hand >= ordered_potentials.first.hand }
+    if remaining_players.count == 1
+      [DD::Win.new(player: remaining_players.first, hand: nil)]
+    else
+      showdown_wins
+    end
   end
 
   def self.apply(event)
@@ -70,6 +69,7 @@ class DD::Projections::Game
   def apply(event)
     case event
     when DD::Events::BetPlaced then apply_bet(event.credits, acted: true)
+    when DD::Events::Folded then apply_fold
     else fail "unhandled event type #{event.class}"
     end
   end
@@ -77,14 +77,9 @@ class DD::Projections::Game
   private
 
     def apply_bet(credits, acted:)
-      self
-        .with(
-          current_player_idx: (current_player_idx + 1) % players.size,
-          players: players_updating(current_player_idx) do
-            _1.apply_bet(credits, acted: acted)
-          end
-        )
-        .send(:apply_start_of_next_stage_if_necessary)
+      apply_move do |current_player|
+        current_player.apply_bet(credits, acted: acted)
+      end
     end
 
     def apply_start_of_next_stage_if_necessary
@@ -93,6 +88,21 @@ class DD::Projections::Game
       else
         self
       end
+    end
+
+    def apply_fold
+      apply_move do |current_player|
+        current_player.apply_fold
+      end
+    end
+
+    def apply_move(&update_current_player)
+      self
+        .with(
+          players: players_updating(current_player_idx, &update_current_player),
+          current_player_idx: (current_player_idx + 1) % players.size,
+        )
+        .send(:apply_start_of_next_stage_if_necessary)
     end
 
     def stage_finished?
@@ -119,10 +129,26 @@ class DD::Projections::Game
       )
     end
 
+    def showdown_wins
+      ordered_potentials =
+        remaining_players
+          .map { potential_win_for(_1) }
+          .sort_by(&:hand)
+          .reverse # best hands first
+
+      # can be multiple winners with equal hands
+      ordered_potentials.take_while { _1.hand >= ordered_potentials.first.hand }
+    end
+
     def potential_win_for(player)
       DD::Win.new(
         player: player,
-        hand: DD::Hand.best_from(player.hole_cards + community_cards),
+        hand:
+          if showdown?
+            DD::Hand.best_from(player.hole_cards + community_cards)
+          else
+            nil
+          end
       )
     end
 end
