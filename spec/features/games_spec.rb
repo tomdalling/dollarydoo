@@ -143,7 +143,7 @@ RSpec.feature "Texas Hold'em Games" do
     end
 
     When "Tom calls" do
-      @game.run_command!(:bet, credits: 100)
+      @game.run_command!(:call)
     end
 
     Then "bets are pooled into the pot" do
@@ -162,6 +162,18 @@ RSpec.feature "Texas Hold'em Games" do
         ],
         deck: [],
       )
+    end
+
+    When "Mot raises" do
+      @game.run_command!(:bet, credits: 500)
+    end
+
+    When "Tom calls" do
+      @game.run_command!(:call)
+    end
+
+    Then "the game is over" do
+      expect(@game).to be_finished
     end
   end
 end

@@ -11,11 +11,26 @@ class DD::Projections::Game
     deck ArrayOf(DD::Card)
   end
 
+  def pre_flop? = stage == :pre_flop
+  def flop? = stage == :flop
+  def turn? = stage == :turn
+  def river? = stage == :river
+  def finished? = river? && stage_finished?
   def current_player = player_at_position(current_player_idx)
   def largest_current_bet = players.map(&:current_bet).max
   def player(username)
     players.find { _1.username == username } or
       fail "player not found: #{username.inspect}"
+  end
+
+  def stage
+    case community_cards.size
+    when 0 then :pre_flop
+    when FLOP_CARDS then :flop
+    when FLOP_CARDS + TURN_AND_RIVER_CARDS then :turn
+    when FLOP_CARDS + 2*TURN_AND_RIVER_CARDS then :river
+    else fail "wtf #{community_cards.size}"
+    end
   end
 
   def self.apply(event)
@@ -49,7 +64,6 @@ class DD::Projections::Game
   end
 
   private
-    def pre_flop? = community_cards.empty?
 
     def apply_bet(credits, acted:)
       self
@@ -63,7 +77,7 @@ class DD::Projections::Game
     end
 
     def apply_start_of_next_stage_if_necessary
-      if stage_finished?
+      if stage_finished? && !river?
         apply_start_of_next_stage
       else
         self
