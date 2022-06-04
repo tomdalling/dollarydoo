@@ -33,7 +33,7 @@ RSpec.feature "Texas Hold'em Games" do
       )
     end
 
-    Then "hole cards are dealt to players" do
+    Then "hole cards are dealt" do
       expect(@game.player("tom").hole_cards).to eq([
         DD::Card.ace_of_spades,
         DD::Card.queen_of_hearts,
@@ -45,15 +45,15 @@ RSpec.feature "Texas Hold'em Games" do
       ])
     end
 
-    Then "Mot has paid the small blind" do
+    And "Mot has paid the small blind" do
       expect(@game.player("mot")).to have_attributes(credits: 990, current_bet: 10)
     end
 
-    Then "Tom has paid the big blind" do
+    And "Tom has paid the big blind" do
       expect(@game.player("tom")).to have_attributes(credits: 980, current_bet: 20)
     end
 
-    Then "Mot is the current player" do
+    And "Mot is the current player" do
       expect(@game.current_player.username).to eq("mot")
     end
 
@@ -68,7 +68,7 @@ RSpec.feature "Texas Hold'em Games" do
       )
     end
 
-    Then "Tom is the current player" do
+    And "Tom is the current player" do
       expect(@game.current_player.username).to eq("tom")
     end
 
@@ -81,7 +81,7 @@ RSpec.feature "Texas Hold'em Games" do
       expect(@game.players).to all have_attributes(current_bet: 0, credits: 980)
     end
 
-    Then "the flop is dealt" do
+    And "the flop is dealt" do
       expect(@game).to have_attributes(
         community_cards: [
           DD::Card.ace_of_diamonds,
@@ -95,7 +95,7 @@ RSpec.feature "Texas Hold'em Games" do
       )
     end
 
-    Then "Mot is the current player" do
+    And "Mot is the current player" do
       expect(@game.current_player.username).to eq("mot")
     end
 
@@ -103,11 +103,11 @@ RSpec.feature "Texas Hold'em Games" do
       @game.run_command!(:check)
     end
 
-    When "Tom raises" do
+    And "Tom raises" do
       @game.run_command!(:bet, credits: 30)
     end
 
-    When "Mot calls" do
+    And "Mot calls" do
       @game.run_command!(:call)
     end
 
@@ -116,7 +116,7 @@ RSpec.feature "Texas Hold'em Games" do
       expect(@game.players).to all have_attributes(current_bet: 0, credits: 950)
     end
 
-    Then "the turn is dealt" do
+    And "the turn is dealt" do
       expect(@game).to have_attributes(
         community_cards: [
           DD::Card.ace_of_diamonds,
@@ -134,15 +134,15 @@ RSpec.feature "Texas Hold'em Games" do
       @game.run_command!(:check)
     end
 
-    When "Tom raises" do
+    And "Tom raises" do
       @game.run_command!(:bet, credits: 100)
     end
 
-    When "Mot reraises" do
+    And "Mot reraises" do
       @game.run_command!(:bet, credits: 200)
     end
 
-    When "Tom calls" do
+    And "Tom calls" do
       @game.run_command!(:call)
     end
 
@@ -151,7 +151,7 @@ RSpec.feature "Texas Hold'em Games" do
       expect(@game.players).to all have_attributes(current_bet: 0, credits: 750)
     end
 
-    Then "the river is dealt" do
+    And "the river is dealt" do
       expect(@game).to have_attributes(
         community_cards: [
           DD::Card.ace_of_diamonds,
@@ -168,7 +168,7 @@ RSpec.feature "Texas Hold'em Games" do
       @game.run_command!(:bet, credits: 500)
     end
 
-    When "Tom calls" do
+    And "Tom calls" do
       @game.run_command!(:call)
     end
 
