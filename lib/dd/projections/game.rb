@@ -12,6 +12,7 @@ class DD::Projections::Game
   end
 
   def current_player = player_at_position(current_player_idx)
+  def largest_current_bet = players.map(&:current_bet).max
   def player(username)
     players.find { _1.username == username } or
       fail "player not found: #{username.inspect}"
@@ -86,7 +87,7 @@ class DD::Projections::Game
       deal_count = pre_flop? ? FLOP_CARDS : TURN_AND_RIVER_CARDS
       with(
         current_player_idx: 1, # player after dealer
-        pooled_pot: players.sum(&:current_bet),
+        pooled_pot: pooled_pot + players.sum(&:current_bet),
         players: players.map(&:apply_reset_for_next_stage),
         community_cards: community_cards + deck.first(deal_count),
         deck: deck.drop(deal_count),

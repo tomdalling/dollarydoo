@@ -1,7 +1,7 @@
 module DD::Commands::StartGame
   extend self
 
-  def call(players:, small_blind:, big_blind:, deck:)
+  def call(_, players:, small_blind:, big_blind:, deck:)
     fail if deck.uniq.size != deck.size
 
     # TODO: validations

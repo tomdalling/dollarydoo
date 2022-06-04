@@ -6,7 +6,7 @@ class DD::Entity < SimpleDelegator
 
   def run_command!(command_name, **command_params)
     command = DD::Commands.lookup(command_name)
-    result = command.call(**command_params)
+    result = command.call(__getobj__, **command_params)
     unless result.ok?
       # TODO: work out what failures look like
       raise "Command failed: #{result.inspect}"

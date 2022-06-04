@@ -58,7 +58,7 @@ RSpec.feature "Texas Hold'em Games" do
     end
 
     When "Mot calls" do
-      @game.run_command!(:bet, credits: 10)
+      @game.run_command!(:call)
     end
 
     Then "Mot has paid up to the big blind" do
@@ -97,6 +97,71 @@ RSpec.feature "Texas Hold'em Games" do
 
     Then "Mot is the current player" do
       expect(@game.current_player.username).to eq("mot")
+    end
+
+    When "Mot checks" do
+      @game.run_command!(:check)
+    end
+
+    When "Tom raises" do
+      @game.run_command!(:bet, credits: 30)
+    end
+
+    When "Mot calls" do
+      @game.run_command!(:call)
+    end
+
+    Then "bets are pooled into the pot" do
+      expect(@game.pooled_pot).to eq(100)
+      expect(@game.players).to all have_attributes(current_bet: 0, credits: 950)
+    end
+
+    Then "the turn is dealt" do
+      expect(@game).to have_attributes(
+        community_cards: [
+          DD::Card.ace_of_diamonds,
+          DD::Card.five_of_spades,
+          DD::Card.four_of_clubs,
+          DD::Card.three_of_diamonds,
+        ],
+        deck: [
+          DD::Card.jack_of_diamonds,
+        ]
+      )
+    end
+
+    When "Mot checks" do
+      @game.run_command!(:check)
+    end
+
+    When "Tom raises" do
+      @game.run_command!(:bet, credits: 100)
+    end
+
+    When "Mot reraises" do
+      @game.run_command!(:bet, credits: 200)
+    end
+
+    When "Tom calls" do
+      @game.run_command!(:bet, credits: 100)
+    end
+
+    Then "bets are pooled into the pot" do
+      expect(@game.pooled_pot).to eq(500)
+      expect(@game.players).to all have_attributes(current_bet: 0, credits: 750)
+    end
+
+    Then "the river is dealt" do
+      expect(@game).to have_attributes(
+        community_cards: [
+          DD::Card.ace_of_diamonds,
+          DD::Card.five_of_spades,
+          DD::Card.four_of_clubs,
+          DD::Card.three_of_diamonds,
+          DD::Card.jack_of_diamonds,
+        ],
+        deck: [],
+      )
     end
   end
 end
